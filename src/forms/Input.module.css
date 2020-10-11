@@ -1,0 +1,41 @@
+.content {
+    margin: 0;
+    font-size: inherit;
+    width: 100%;
+}
+
+.inlineWrapper > .content {
+    white-space: pre;
+}
+
+*:not(.inlineWrapper) > .content {
+    white-space: pre-wrap;
+}
+
+.content:focus {
+    outline: none;
+}
+
+.wrapper {
+    cursor: text;
+    position: relative;
+    overflow: hidden;
+}
+
+.inlineWrapper > .content::-webkit-scrollbar {
+    display: none;
+}
+
+.inlineWrapper > .content {
+    overflow: scroll;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.placeholder {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    font-size: inherit;
+}
