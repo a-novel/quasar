@@ -17,7 +17,7 @@
     "babel-jest": "^26.5.2",
     "codecov": "^3.8.0",
     "enzyme": "^3.11.0",
-    "enzyme-adapter-react-16": "^1.15.5",
+    "enzyme-adapter-react-16": "^^16.4.0-0",
     "jest": "^26.5.3",
     "jest-environment-jsdom-sixteen": "^1.0.3",
     "jest-enzyme": "^7.1.2",

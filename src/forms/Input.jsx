@@ -3,9 +3,15 @@
 
 import React from 'react';
 import {LocalHistory} from '@anovel/records';
-import {getRange, setRange, Sequencer, literals} from '@anovel/tachyon';
+import {getRange, setRange, Sequencer, literals as tachyonLiterals} from '@anovel/tachyon';
 import {dynamicRef, addPropsToChildren} from '@anovel/reactor';
 import css from './Input.module.css';
+
+/* c8 ignore next 4 */
+const literals = {
+	WARN_VALUEPROPUPDATE: 'trying to update input records through props : this is forbidden and changes will not be reflected in the component',
+	ERROR_NONVALIDCONTENT: content => `value ${content} of type ${content != null ? content.constructor.name : 'undefined'} is not a valid string`
+};
 
 /**
  * Represent a caret range within a rendered string. Caret goes from content[start] to content[end].
@@ -34,6 +40,7 @@ import css from './Input.module.css';
  *  focus: function(): void,
  *  undo: function(): Promise<void>,
  *  redo: function(): Promise<void>,
+ *  records: function(): InputHistoryRecord[],
  *  getSelectionRange: function(): {absolute: Caret, start: {container: Node, offset: number}, end: {container: Node, offset: number}},
  *  setSelectionRange: function(number, number): void
  * }} InputMethods
@@ -66,7 +73,7 @@ import css from './Input.module.css';
 class Input extends React.Component {
 	constructor(props) {
 		super(props);
-		dynamicRef.bind(this)(this.props.innerRef, 'ref');
+		dynamicRef.bind(this)(props.innerRef, 'inputRef');
 	}
 
 	/**---------------------**/
@@ -98,7 +105,7 @@ class Input extends React.Component {
 	 * @type {{current: Node}}
 	 * @private
 	 */
-	ref;
+	inputRef;
 
 	/**
 	 * Caret is not directly updated when input is updated, since lags and concurrent modification may lead to visual
@@ -118,13 +125,16 @@ class Input extends React.Component {
 	 * Bind controls and accessors.
 	 */
 	componentDidMount() {
+		// Set caret at the end of content.
+		setRange(this.inputRef.current, this.state.value.length, this.state.value.length, this.props.ignore);
+
 		// Launch sequencer.
-		this.sequencer.listen(this.ref.current);
+		this.sequencer.listen(this.inputRef.current);
 
 		// Register controls. We only need two of them : CTRL + Z and CTRL + Shift + Z, for undo and redo - all other
 		// special controls will work normally with default implementation.
-		this.sequencer.register(this.undo, literals.COMBOS.UNDO);
-		this.sequencer.register(this.redo, literals.COMBOS.REDO);
+		this.sequencer.register(tachyonLiterals.COMBOS.UNDO, this.undo);
+		this.sequencer.register(tachyonLiterals.COMBOS.REDO, this.redo);
 
 		// Add custom sequences.
 		this.sequencer.dynamicKeys(() => this.props.sequences);
@@ -132,13 +142,14 @@ class Input extends React.Component {
 		// Add possibility for parent component to access some child methods, and interact with it.
 		if (this.props.accessor) {
 			this.props.accessor({
-				value: this.getValue,
-				write: this.write,
-				focus: this.focus,
-				undo: this.undo,
-				redo: this.redo,
-				getSelectionRange: this.getSelectionRange,
-				setSelectionRange: this.setSelectionRange
+				value: () => this.getValue(),
+				write: (...args) => this.write(...args),
+				focus: () => this.focus(),
+				undo: () => this.undo(),
+				redo: () => this.redo(),
+				records: () => this.recorder.getRecords(),
+				getSelectionRange: () => this.getSelectionRange(),
+				setSelectionRange: (...args) => this.setSelectionRange(...args)
 			});
 		}
 	}
@@ -151,13 +162,14 @@ class Input extends React.Component {
 	componentDidUpdate(prevProps, prevState, snapshot) {
 		// Below guard don't lead to crashes. It is added to warn the developer about some potential mistakes.
 		if (this.props.value !== prevProps.value) {
-			console.warn('trying to update input records through props : this is forbidden and changes will not be ' +
-				'reflected in the component');
+			console.warn(literals.WARN_VALUEPROPUPDATE);
 		}
 
 		// Caret is updated after component update, since rendering with parser (which occurs after state update) might
 		// cause caret jump.
 		this.replaceCaret();
+
+		/* c8 ignore next 3  */
 		if (!this.props.disableAutoScroll) {
 			this.scrollIntoView();
 		}
@@ -175,9 +187,15 @@ class Input extends React.Component {
 	 * @return {Promise<void>}
 	 */
 	write = (content, remove) => {
+		if (content != null &&  content.constructor.name === 'Number') {
+			content = `${content}`;
+		} else if (content == null || content.constructor.name !== 'String') {
+			return Promise.reject(literals.ERROR_NONVALIDCONTENT(content));
+		}
+
 		// Get caret position. We don't use class method since it is useless from inside - it does the same operation for
-		// external user who may not have any access to this.ref.
-		const {start, end} = this.holder || getRange(this.ref.current, this.props.ignore).absolute;
+		// external user who may not have any access to this.inputRef.
+		const {start, end} = this.holder || getRange(this.inputRef.current, this.props.ignore).absolute;
 		const {onUpdate} = this.props;
 
 		// Filter content.
@@ -204,7 +222,7 @@ class Input extends React.Component {
 		return new Promise(
 			resolve => this.setState({value: this.recorder.getValue()}, () => {
 				if (onUpdate != null) {
-					onUpdate({content, caret: {start, end}, record: newRecord});
+					onUpdate(newRecord, this.recorder.getValue());
 				}
 
 				resolve();
@@ -230,7 +248,7 @@ class Input extends React.Component {
 	undo = () => {
 		const altered = this.recorder.revertChain(this.recordChain);
 
-		const currentCaret = this.holder || getRange(this.ref.current, this.props.ignore).absolute;
+		const currentCaret = this.holder || getRange(this.inputRef.current, this.props.ignore).absolute;
 		const newCaretPos = altered.reduce((acc, {from, to, caret}) => {
 			const diff = from.length - to.length;
 			const rCaret = {start: caret.start, end: caret.start + to.length};
@@ -261,7 +279,7 @@ class Input extends React.Component {
 	redo = () => {
 		const altered = this.recorder.applyChain(this.recordChain);
 
-		const currentCaret = this.holder || getRange(this.ref.current, this.props.ignore).absolute;
+		const currentCaret = this.holder || getRange(this.inputRef.current, this.props.ignore).absolute;
 		const newCaretPos = altered.reduce((acc, {from, to, caret}) => {
 			if (caret.start <= acc) {
 				if (caret.end < acc) {
@@ -301,7 +319,7 @@ class Input extends React.Component {
 		this.holder = null;
 
 		// Position caret at wanted range.
-		setRange(this.ref.current, holder.start, holder.start, this.props.ignore);
+		setRange(this.inputRef.current, holder.start, holder.start, this.props.ignore);
 	};
 
 	/**-----------------------**/
@@ -323,7 +341,7 @@ class Input extends React.Component {
 	 * @public
 	 */
 	getSelectionRange = () => {
-		return getRange(this.ref.current, this.props.ignore);
+		return getRange(this.inputRef.current, this.props.ignore);
 	};
 
 	/**
@@ -335,7 +353,7 @@ class Input extends React.Component {
 	 */
 	setSelectionRange = (start, end) => {
 		this.holder = null;
-		setRange(this.ref.current, start, end, this.props.ignore);
+		setRange(this.inputRef.current, start, end, this.props.ignore);
 	};
 
 	/**---------------------**/
@@ -368,7 +386,7 @@ class Input extends React.Component {
 
 		// If a custom filter is set, it is called after characterSet filtering.
 		if (filter != null) {
-			content = filter(content, this.state.value);
+			content = filter(content);
 		}
 
 		return content;
@@ -377,9 +395,10 @@ class Input extends React.Component {
 	/**
 	 * Scroll to the caret position, in case of input overflow.
 	 */
+	/* c8 ignore next 15 */
 	scrollIntoView = () => {
 		const sel = window.getSelection();
-		const {current} = this.ref;
+		const {current} = this.inputRef;
 		if (sel.anchorNode) {
 			const {top, right, bottom, left} = sel.getRangeAt(0).getBoundingClientRect();
 			const {top: parentTop, right: parentRight, bottom: parentBottom, left: parentLeft} = current.getBoundingClientRect();
@@ -400,8 +419,8 @@ class Input extends React.Component {
 		if (this.props.onWriteError != null) {
 			this.props.onWriteError(error);
 			return;
+		/* c8 ignore next 3 */
 		}
-
 		console.error(error);
 	};
 
@@ -416,7 +435,8 @@ class Input extends React.Component {
 
 	paste = e => {
 		e.preventDefault();
-		const data = (e.clipboardData || e.clipboardData).getData('text') || '';
+		/* c8 ignore next 1 */
+		const data = e.clipboardData.getData('text') || '';
 		this.write(data).catch(this.handleError);
 	}
 
@@ -437,7 +457,7 @@ class Input extends React.Component {
 	}
 
 	focus = () => {
-		this.ref.current.focus();
+		this.inputRef.current.focus();
 	}
 
 	/**---------------------**/
@@ -457,6 +477,10 @@ class Input extends React.Component {
 			area,
 			accessor,
 			disableAutoScroll,
+			onUpdate,
+			onWriteError,
+			filter,
+			onFocus,
 			...props
 		} = this.props;
 
@@ -472,12 +496,14 @@ class Input extends React.Component {
 					null
 				}
 				<pre
-					ref={this.ref}
+					tabIndex={1}
+					ref={this.inputRef}
+					onFocus={onFocus}
 					className={css.content}
-					onBeforeInput={this.beforeInput.bind(this)}
-					onKeyDown={this.keys.bind(this)}
-					onPaste={this.paste.bind(this)}
-					onCut={this.cut.bind(this)}
+					onBeforeInput={this.beforeInput}
+					onKeyDown={this.keys}
+					onPaste={this.paste}
+					onCut={this.cut}
 					suppressContentEditableWarning
 					contentEditable
 				>
@@ -487,5 +513,6 @@ class Input extends React.Component {
 		);
 	}
 }
-
+/* c8 ignore next 2 */
 export default React.forwardRef((props, ref) => <Input {...props} innerRef={ref}/>);
+export {literals, Input};

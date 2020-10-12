@@ -27,7 +27,8 @@ module.exports = {
   coveragePathIgnorePatterns: [
     "/node_modules/",
     "dist/",
-    "lib/"
+    "lib/",
+    "src/index.js"
   ],
 
   // Indicates which provider should be used to instrument code for coverage
@@ -126,7 +127,7 @@ module.exports = {
   setupFiles: ['./tests/__setup/env.js'],
 
   // A list of paths to modules that run some code to configure or set up the testing framework before each test
-  // setupFilesAfterEnv: [],
+  setupFilesAfterEnv: ['./node_modules/jest-enzyme/lib/index.js'],
 
   // The number of seconds after which a test is considered as slow and reported as such in the results.
   // slowTestThreshold: 5,
