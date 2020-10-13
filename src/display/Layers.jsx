@@ -6,7 +6,7 @@ const literals = {
 	ERROR_NONVALIDPROP: (prop, propName, expected) => `non valid prop ${propName} of type ${prop.constructor.name} : expected ${expected}`
 };
 
-const Stack = ({children, className, align, expand}) => {
+const Layers = ({children, className, align, expand}) => {
 	const style = {};
 	const transform = ['', ''];
 
@@ -82,4 +82,4 @@ const Stack = ({children, className, align, expand}) => {
 	);
 };
 
-export default Stack;
+export default Layers;
