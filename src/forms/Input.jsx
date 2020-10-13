@@ -564,7 +564,7 @@ class Input extends React.Component {
 		const {value} = this.state;
 
 		return (
-			<div className={`${css.wrapper} ${area ? '' : css.inlineWrapper} ${className}`} {...props}>
+			<div className={`${css.wrapper} ${area ? '' : css.inlineWrapper} ${className || ''}`} {...props}>
 				{placeholder != null && (value == null || value.length === 0) ?
 					addPropsToChildren(
 						placeholder,
