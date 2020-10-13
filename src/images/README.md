@@ -1,4 +1,4 @@
-# Quasar
+# Images
 
 <div align="center">
     <a href="https://www.npmjs.com/package/@anovel/quasar">
@@ -18,15 +18,36 @@
 </div>
 <br/>
 
-A collection of React functional components.
-
-## [Forms](https://github.com/a-novel/quasar/tree/master/src/forms)
-
-A list of components to use for building advanced forms.
-
-## [Images](https://github.com/a-novel/quasar/tree/master/src/images)
-
 Enhance your application with pictures, the React way.
+
+# Image
+
+```jsx
+import React from 'react';
+import {Image} from '@anovel/quasar';
+
+const MyComponent = () => (
+  <Image src='/path/to/file'/>
+);
+```
+
+The src prop, which should always start with a `/`, is relative to the
+`public/` folder in React.
+
+> Image tag is rendered as a div, so it is compatible with every div
+> element props.
+
+# Svg
+
+```jsx
+import React from 'react';
+import {Svg} from '@anovel/quasar';
+import {ReactComponent as MySvgComponent} from 'path/to/my/file.svg';
+
+const MyComponent = () => (
+  <Svg component={MySvgComponent}/>
+);
+```
 
 # License
 

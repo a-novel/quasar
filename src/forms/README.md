@@ -431,4 +431,3 @@ Represent a caret position within a selection.
 # License
 
 [Licensed under MIT for A-Novel](https://github.com/a-novel/quasar/blob/master/LICENSE).
-
