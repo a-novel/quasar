@@ -18,7 +18,7 @@
 </div>
 <br/>
 
-A list of component to use for building advanced form components.
+A list of components to use for building advanced forms.
 
 - [Input](#input)
     - [Interacting with the input](#interacting-with-the-input)
