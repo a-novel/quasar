@@ -13,7 +13,7 @@
     "@babel/preset-env": "^7.11.5",
     "@babel/preset-react": "^7.10.4",
     "@jest/globals": "^26.5.3",
-    "autoprefixer": "^10.0.1",
+    "autoprefixer": "^9.0.2",
     "babel-jest": "^26.5.2",
     "codecov": "^3.8.0",
     "enzyme": "^3.11.0",
@@ -21,6 +21,7 @@
     "jest": "^26.5.3",
     "jest-environment-jsdom-sixteen": "^1.0.3",
     "jest-enzyme": "^7.1.2",
+    "postcss": "^8.1.1",
     "react-test-renderer": "^16.13.1",
     "rollup": "^2.29.0",
     "rollup-plugin-babel": "^4.4.0",
@@ -29,9 +30,9 @@
     "rollup-plugin-postcss": "^3.1.8"
   },
   "scripts": {
-    "build": "rollup -c",
+    "build": "NODE_ENV= && rollup -c",
     "build:publish": "yarn build && yarn publish",
-    "test": "jest --watchAll --coverage --coverageDirectory=./coverage/jest",
+    "test": "NODE_ENV=test && jest --watchAll --coverage --coverageDirectory=./coverage/jest",
     "coverage:upload": "./node_modules/.bin/codecov --token='b67d0fe1-d8a8-4a44-9821-e7ca9186ae2c'"
   },
   "repository": {
