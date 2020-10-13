@@ -40,7 +40,7 @@ const literals = {
  * Input exposed methods.
  *
  * @typedef {{
- *	value: function: string,
+ *	value: function(boolean): string,
  *  write: function(string, boolean=): Promise<void>,
  *  focus: function(): void,
  *  undo: function(): Promise<void>,
@@ -149,7 +149,7 @@ class Input extends React.Component {
 			switch (this.props.exposer.constructor.name) {
 				case 'Function':
 					this.props.exposer({
-						value: () => this.getValue(),
+						value: (...args) => this.getValue(...args),
 						write: (...args) => this.write(...args),
 						/* c8 ignore next 1 */
 						isFocused: () => document.activeElement === this.inputRef.current,
@@ -163,7 +163,7 @@ class Input extends React.Component {
 					break;
 				case 'Object':
 					this.props.exposer.methods = {
-						value: () => this.getValue(),
+						value: (...args) => this.getValue(...args),
 						write: (...args) => this.write(...args),
 						/* c8 ignore next 1 */
 						isFocused: () => document.activeElement === this.inputRef.current,
@@ -229,7 +229,7 @@ class Input extends React.Component {
 				this.holder || getRange(this.inputRef.current, this.props.ignore).absolute :
 				{start: this.state.value.length, end: this.state.value.length}
 			);
-		const {onUpdate} = this.props;
+		const {onChange} = this.props;
 
 		const updateCaret = (remove && start > 0) ? {start: start - 1, end: start} : {start, end}
 
@@ -268,8 +268,8 @@ class Input extends React.Component {
 		// Resolve async.
 		return new Promise(
 			resolve => this.setState({value: this.recorder.getValue()}, () => {
-				if (onUpdate != null) {
-					onUpdate(newRecord, this.recorder.getValue());
+				if (onChange != null) {
+					onChange(newRecord, this.recorder.getValue());
 				}
 
 				resolve();
@@ -374,11 +374,12 @@ class Input extends React.Component {
 	/**-----------------------**/
 
 	/**
+	 * @param {boolean=} includeGhostCharacters
 	 * @return {string}
 	 * @public
 	 */
-	getValue = () => {
-		return this.state.value;
+	getValue = includeGhostCharacters => {
+		return includeGhostCharacters ? this.inputRef.current.innerText : this.state.value;
 	};
 
 	/**
@@ -462,11 +463,11 @@ class Input extends React.Component {
 	/**
 	 * @param {Error} error
 	 */
-	handleError = error => {
+	/* c8 ignore next 7 */
+	handleError = async error => {
 		if (this.props.onWriteError != null) {
-			this.props.onWriteError(error);
+			await this.props.onWriteError(error);
 			return;
-		/* c8 ignore next 3 */
 		}
 		console.error(error);
 	};
@@ -477,18 +478,35 @@ class Input extends React.Component {
 
 	beforeInput = e => {
 		e.preventDefault();
+
+		/* c8 ignore next 4 */
+		if (this.props.onBeforeInput != null) {
+			this.props.onBeforeInput(e);
+		}
+
 		this.write(e.data, false, e.caret).catch(this.handleError);
 	}
 
 	paste = e => {
 		e.preventDefault();
-		/* c8 ignore next 1 */
+
+		/* c8 ignore next 5 */
+		if (this.props.onPaste != null) {
+			this.props.onPaste(e);
+		}
+
 		const data = e.clipboardData.getData('text') || '';
 		this.write(data, false, e.caret).catch(this.handleError);
 	}
 
 	cut = e => {
 		e.preventDefault();
+
+		/* c8 ignore next 4 */
+		if (this.props.onCut != null) {
+			this.props.onCut(e);
+		}
+
 		const selection = document.getSelection();
 		e.clipboardData.setData('text/plain', selection.toString());
 		this.write('', false, e.caret).catch(this.handleError);
@@ -497,9 +515,14 @@ class Input extends React.Component {
 	keys = e => {
 		const {key} = e;
 
+		/* c8 ignore next 4 */
+		if (this.props.onKeyDown != null) {
+			this.props.onKeyDown(e);
+		}
+
 		if (key === 'Backspace') {
 			e.preventDefault();
-			this.write('', true, e.devCaret).catch(this.handleError);
+			this.write('', true, e.caret).catch(this.handleError);
 		}
 	}
 
@@ -523,10 +546,18 @@ class Input extends React.Component {
 			area,
 			exposer,
 			disableAutoScroll,
-			onUpdate,
 			onWriteError,
+			onBeforeInputCapture,
+			onFocusCapture,
+			onCopy,
+			onCut,
+			onPaste,
+			onBeforeInput,
+			onBlur,
 			filter,
 			onFocus,
+			onSelect,
+			onKeyDown,
 			...props
 		} = this.props;
 
@@ -537,7 +568,9 @@ class Input extends React.Component {
 				{placeholder != null && (value == null || value.length === 0) ?
 					addPropsToChildren(
 						placeholder,
-						({className, ...props}) => ({className: `${css.placeholder} ${className}`, ...props})
+						({className: placeholderClassname, ...placeholderProps}) => ({
+							className: `${css.placeholder} ${placeholderClassname}`, ...placeholderProps
+						})
 					) :
 					null
 				}
@@ -545,6 +578,11 @@ class Input extends React.Component {
 					tabIndex={1}
 					ref={this.inputRef}
 					onFocus={onFocus}
+					onBeforeInputCapture={onBeforeInputCapture}
+					onBlur={onBlur}
+					onCopy={onCopy}
+					onFocusCapture={onFocusCapture}
+					onSelect={onSelect}
 					className={css.content}
 					onBeforeInput={this.beforeInput}
 					onKeyDown={this.keys}

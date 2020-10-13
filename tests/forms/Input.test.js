@@ -210,7 +210,7 @@ describe('testing Input component', () => {
 		mount(<Input
 			disableAutoScroll
 			onWriteError={errorHandler}
-			onUpdate={updateHandler}
+			onChange={updateHandler}
 			filter={filterHandler}
 			exposer={exposer}
 		/>);
@@ -413,6 +413,55 @@ describe('testing Input component', () => {
 
 		await exposer.methods.write('ello world');
 		expect(exposer.methods.value()).toEqual('hello');
+
+		done();
+	});
+
+	it('should work for date input in docs', async done => {
+		const renderDateInput = content => content.split('').map(
+			(char, index) => [1,3].includes(index) ?
+				<span key={index}>{char}<span className='separator'>/</span></span> :
+				<span key={index} children={char}/>
+		);
+
+		const exposer = createExposer();
+		const component = mount(<Input
+			exposer={exposer}
+			ignore={['.separator']}
+			maxLength={8}
+			characterSet={{include: '0123456789'}}
+			render={renderDateInput}
+		/>);
+
+		expect(exposer.methods.value()).toEqual('');
+
+		await exposer.methods.write(0);
+		expect(exposer.methods.value()).toEqual('0');
+		expect(component.find('pre').text()).toEqual('0');
+		await exposer.methods.write(1);
+		expect(exposer.methods.value()).toEqual('01');
+		expect(component.find('pre').text()).toEqual('01/');
+		await exposer.methods.write(0);
+		expect(exposer.methods.value()).toEqual('010');
+		expect(component.find('pre').text()).toEqual('01/0');
+		await exposer.methods.write(1);
+		expect(exposer.methods.value()).toEqual('0101');
+		expect(component.find('pre').text()).toEqual('01/01/');
+		await exposer.methods.write(1);
+		expect(exposer.methods.value()).toEqual('01011');
+		expect(component.find('pre').text()).toEqual('01/01/1');
+		await exposer.methods.write(9);
+		expect(exposer.methods.value()).toEqual('010119');
+		expect(component.find('pre').text()).toEqual('01/01/19');
+		await exposer.methods.write(7);
+		expect(exposer.methods.value()).toEqual('0101197');
+		expect(component.find('pre').text()).toEqual('01/01/197');
+		await exposer.methods.write(0);
+		expect(exposer.methods.value()).toEqual('01011970');
+		expect(component.find('pre').text()).toEqual('01/01/1970');
+		await exposer.methods.write(0);
+		expect(exposer.methods.value()).toEqual('01011970');
+		expect(component.find('pre').text()).toEqual('01/01/1970');
 
 		done();
 	});
