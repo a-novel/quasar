@@ -37,7 +37,7 @@ A list of components to use for building advanced forms.
 # Input
 
 This is a custom implementation of the default `<input/>` element based on the 
-**contenteditable** attribute, which allows for more deep control over the Input textual
+**contenteditable** attribute, which allows for more deep control over the input textual
 content.
 
 The goal was to make the component as simple as possible to use. Their is no required
@@ -61,7 +61,7 @@ from the outside. This is done by exposing internal methods through the `exposer
 
 ```jsx
 import React from 'react';
-import {Input} from '@anovel/quasar';
+import {Input, createExposer} from '@anovel/quasar';
 
 const MyComponent = () => {
   // Was created intentionnally to work like React.createRef()
