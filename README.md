@@ -20,6 +20,10 @@
 
 A collection of React functional components.
 
+## [Forms](https://github.com/a-novel/quasar/tree/master/src/forms)
+
+A list of component to use for building advanced form components.
+
 # License
 
 [Licensed under MIT for A-Novel](https://github.com/a-novel/quasar/blob/master/LICENSE).

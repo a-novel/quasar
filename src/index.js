@@ -1,3 +1,3 @@
-import Input from './forms/Input';
+import Input, {createExposer} from './forms/Input';
 
-export {Input};
+export {Input, createExposer};

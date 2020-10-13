@@ -7,10 +7,15 @@ import {getRange, setRange, Sequencer, literals as tachyonLiterals} from '@anove
 import {dynamicRef, addPropsToChildren} from '@anovel/reactor';
 import css from './Input.module.css';
 
+function createExposer() {
+	return { methods: null };
+}
+
 /* c8 ignore next 4 */
 const literals = {
 	WARN_VALUEPROPUPDATE: 'trying to update input records through props : this is forbidden and changes will not be reflected in the component',
-	ERROR_NONVALIDCONTENT: content => `value ${content} of type ${content != null ? content.constructor.name : 'undefined'} is not a valid string`
+	ERROR_NONVALIDCONTENT: content => `value ${content} of type ${content != null ? content.constructor.name : 'undefined'} is not a valid string`,
+	ERROR_NONVALIDEXPOSER: exposer => `exposer ${exposer} of type ${exposer != null ? exposer.constructor.name : 'undefined'} is not a valid expose object`
 };
 
 /**
@@ -49,7 +54,7 @@ const literals = {
 /**
  * @typedef {Object} InputBlockProps
  * @property {sequence[]|null} [sequences] - a list of custom sequences of keys to listen to
- * @property {function(methods: InputMethods)|null} [accessor] - return pointers to input instance methods
+ * @property {function(methods: InputMethods)|null} [exposer] - return pointers to input instance methods
  * @property {InputHistoryRecord[]|null} [records] - initial records of the input
  * @property {boolean|null} [area] - if set, input will display line breaks
  * @property {function(content: string, value: string): string|null} [filter] - custom filter to trigger when new content is added
@@ -122,7 +127,7 @@ class Input extends React.Component {
 	/**---------------------**/
 
 	/**
-	 * Bind controls and accessors.
+	 * Bind controls and exposers.
 	 */
 	componentDidMount() {
 		// Set caret at the end of content.
@@ -140,17 +145,39 @@ class Input extends React.Component {
 		this.sequencer.dynamicKeys(() => this.props.sequences);
 
 		// Add possibility for parent component to access some child methods, and interact with it.
-		if (this.props.accessor) {
-			this.props.accessor({
-				value: () => this.getValue(),
-				write: (...args) => this.write(...args),
-				focus: () => this.focus(),
-				undo: () => this.undo(),
-				redo: () => this.redo(),
-				records: () => this.recorder.getRecords(),
-				getSelectionRange: () => this.getSelectionRange(),
-				setSelectionRange: (...args) => this.setSelectionRange(...args)
-			});
+		if (this.props.exposer != null) {
+			switch (this.props.exposer.constructor.name) {
+				case 'Function':
+					this.props.exposer({
+						value: () => this.getValue(),
+						write: (...args) => this.write(...args),
+						/* c8 ignore next 1 */
+						isFocused: () => document.activeElement === this.inputRef.current,
+						focus: () => this.focus(),
+						undo: () => this.undo(),
+						redo: () => this.redo(),
+						records: () => this.recorder.getRecords(),
+						getSelectionRange: () => this.getSelectionRange(),
+						setSelectionRange: (...args) => this.setSelectionRange(...args)
+					});
+					break;
+				case 'Object':
+					this.props.exposer.methods = {
+						value: () => this.getValue(),
+						write: (...args) => this.write(...args),
+						/* c8 ignore next 1 */
+						isFocused: () => document.activeElement === this.inputRef.current,
+						focus: () => this.focus(),
+						undo: () => this.undo(),
+						redo: () => this.redo(),
+						records: () => this.recorder.getRecords(),
+						getSelectionRange: () => this.getSelectionRange(),
+						setSelectionRange: (...args) => this.setSelectionRange(...args)
+					};
+					break;
+				default:
+					throw new Error(literals.ERROR_NONVALIDEXPOSER(this.props.exposer));
+			}
 		}
 	}
 
@@ -169,7 +196,7 @@ class Input extends React.Component {
 		// cause caret jump.
 		this.replaceCaret();
 
-		/* c8 ignore next 3  */
+		/* c8 ignore next 3 */
 		if (!this.props.disableAutoScroll) {
 			this.scrollIntoView();
 		}
@@ -184,9 +211,10 @@ class Input extends React.Component {
 	 *
 	 * @param {string} content
 	 * @param {boolean=} remove
+	 * @param {Caret=} caret
 	 * @return {Promise<void>}
 	 */
-	write = (content, remove) => {
+	write = (content, remove, caret) => {
 		if (content != null &&  content.constructor.name === 'Number') {
 			content = `${content}`;
 		} else if (content == null || content.constructor.name !== 'String') {
@@ -195,11 +223,28 @@ class Input extends React.Component {
 
 		// Get caret position. We don't use class method since it is useless from inside - it does the same operation for
 		// external user who may not have any access to this.inputRef.
-		const {start, end} = this.holder || getRange(this.inputRef.current, this.props.ignore).absolute;
+		const {start, end} = caret || (
+			/* c8 ignore next 2 */
+			document.activeElement === this.inputRef.current ?
+				this.holder || getRange(this.inputRef.current, this.props.ignore).absolute :
+				{start: this.state.value.length, end: this.state.value.length}
+			);
 		const {onUpdate} = this.props;
+
+		const updateCaret = (remove && start > 0) ? {start: start - 1, end: start} : {start, end}
 
 		// Filter content.
 		content = this.filter(content);
+
+		const finalLength = content.length + this.state.value.length - end + start;
+
+		if (
+			this.props.maxLength &&
+			this.props.maxLength >= 0 &&
+			finalLength > this.props.maxLength
+		) {
+			content = content.slice(0, content.length + this.props.maxLength - finalLength)
+		}
 
 		/**
 		 * Add record to history.
@@ -209,14 +254,16 @@ class Input extends React.Component {
 		const newRecord = this.recorder.push({
 			to: remove ? '' : content,
 			// Remove is equivalent to replace previous character with empty string.
-			caret: (remove && start > 0) ? {start: start - 1, end: start} : {start, end},
+			caret: updateCaret,
 			timestamp: (new Date()).getTime()
 		});
 
-		const diff = newRecord.to.length - newRecord.from.length;
-		const newPos = end + diff;
+		if (!caret) {
+			const diff = newRecord.to.length - newRecord.from.length;
+			const newPos = end + diff;
 
-		this.holder = {start: newPos, end: newPos};
+			this.holder = {start: newPos, end: newPos};
+		}
 
 		// Resolve async.
 		return new Promise(
@@ -372,7 +419,7 @@ class Input extends React.Component {
 		// Only area allows line breaks.
 		if (!area) {
 			characterSet = characterSet || {};
-			characterSet.exclude = [...(characterSet.exclude || []), '\n'];
+			characterSet.exclude = `${characterSet.exclude || ''}\n`;
 		}
 
 		if (characterSet) {
@@ -430,21 +477,21 @@ class Input extends React.Component {
 
 	beforeInput = e => {
 		e.preventDefault();
-		this.write(e.data).catch(this.handleError);
+		this.write(e.data, false, e.caret).catch(this.handleError);
 	}
 
 	paste = e => {
 		e.preventDefault();
 		/* c8 ignore next 1 */
 		const data = e.clipboardData.getData('text') || '';
-		this.write(data).catch(this.handleError);
+		this.write(data, false, e.caret).catch(this.handleError);
 	}
 
 	cut = e => {
 		e.preventDefault();
 		const selection = document.getSelection();
 		e.clipboardData.setData('text/plain', selection.toString());
-		this.write('').catch(this.handleError);
+		this.write('', false, e.caret).catch(this.handleError);
 	}
 
 	keys = e => {
@@ -452,7 +499,7 @@ class Input extends React.Component {
 
 		if (key === 'Backspace') {
 			e.preventDefault();
-			this.write('', true).catch(this.handleError);
+			this.write('', true, e.devCaret).catch(this.handleError);
 		}
 	}
 
@@ -470,12 +517,11 @@ class Input extends React.Component {
 			onChange,
 			render,
 			placeholder,
-			preChange,
 			maxLength,
 			characterSet,
 			className,
 			area,
-			accessor,
+			exposer,
 			disableAutoScroll,
 			onUpdate,
 			onWriteError,
@@ -515,4 +561,4 @@ class Input extends React.Component {
 }
 /* c8 ignore next 2 */
 export default React.forwardRef((props, ref) => <Input {...props} innerRef={ref}/>);
-export {literals, Input};
+export {literals, Input, createExposer};
