@@ -211,7 +211,7 @@ const MyComponent = () => {
 
 ### characterSet
 
-Restrict the character the user can type in the input. If a forbidden key is pressed,
+Restrict the characters the user can type in the input. If a forbidden key is pressed,
 it will simply be ignored.
 
 This property also filter values added through paste.
