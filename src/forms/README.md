@@ -98,9 +98,9 @@ accessible methods are listed below :
 | Key | Arguments | Returns | Description |
 | :--- | :--- | :--- | :--- |
 | value | - | string | Returns the current value held by the component. It matches the display value only if [render method]() doesn't add [ghost characters](). |
-| write | string, boolean, [Caret](#caret) | Promise<void> | See details at [Write](#write) method section. |
-| undo | - | Promise<void> | Undo last active entry. **[(1)](#recordpackage)** |
-| redo | - | Promise<void> | Redo last non active entry. **[(1)](#recordpackage)** |
+| write | string, boolean, [Caret](#caret) | Promise\<void> | See details at [write](#write) method section. |
+| undo | - | Promise\<void> | Undo last active entry. **[(1)](#recordpackage)** |
+| redo | - | Promise\<void> | Redo last non active entry. **[(1)](#recordpackage)** |
 | records | - | [][Records](https://github.com/a-novel/records#record-object) | Redo last non active entry. **[(1)](#recordpackage)** |
 | isFocused | - | boolean | Return true if the current input has focus in the document. |
 | focus | - | - | Give the current input focus. |
