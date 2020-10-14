@@ -1,5 +1,5 @@
 import React from 'react';
-import css from './Stack.module.css';
+import css from './Layers.module.css';
 import {addPropsToChildren} from '@anovel/reactor';
 
 const literals = {
