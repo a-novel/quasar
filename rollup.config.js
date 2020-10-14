@@ -7,7 +7,7 @@ import postcss from 'rollup-plugin-postcss';
 
 export default [
 	{
-		inlineDynamicImports: true,
+		inlineDynamicImports: false,
 		input: './src/index.js',
 		output: [
 			{
