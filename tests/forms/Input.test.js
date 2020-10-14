@@ -465,4 +465,23 @@ describe('testing Input component', () => {
 
 		done();
 	});
+
+	it('should remove correctly', async done => {
+		const exposer = createExposer();
+		mount(<Input exposer={exposer} disableAutoScroll/>);
+
+		await exposer.methods.write('hello world');
+
+		expect(exposer.methods.value()).toEqual('hello world');
+
+		await exposer.methods.write('should not write', true, {start: 5, end: 5});
+
+		expect(exposer.methods.value()).toEqual('hell world');
+
+		await exposer.methods.write('should not write', true, {start: 0, end: 5});
+
+		expect(exposer.methods.value()).toEqual('world');
+
+		done();
+	})
 });

@@ -231,7 +231,7 @@ class Input extends React.Component {
 			);
 		const {onChange} = this.props;
 
-		const updateCaret = (remove && start > 0) ? {start: start - 1, end: start} : {start, end}
+		const updateCaret = (remove && start > 0 && start === end) ? {start: start - 1, end: start} : {start, end}
 
 		// Filter content.
 		content = this.filter(content);
