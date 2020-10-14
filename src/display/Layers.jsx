@@ -6,7 +6,7 @@ const literals = {
 	ERROR_NONVALIDPROP: (prop, propName, expected) => `non valid prop ${propName} of type ${prop.constructor.name} : expected ${expected}`
 };
 
-const Layers = ({children, className, align, expand}) => {
+const Layers = ({children, className, align, expand, ...props}) => {
 	const style = {};
 	const transform = ['', ''];
 
@@ -73,7 +73,7 @@ const Layers = ({children, className, align, expand}) => {
 	}
 
 	return (
-		<div className={`${css.wrapper} ${className || ''}`}>
+		<div className={`${css.wrapper} ${className || ''}`} {...props}>
 			{addPropsToChildren(children, ({style: childStyle, ...props}) => ({
 				style: Object.assign({}, style, childStyle),
 				...props
