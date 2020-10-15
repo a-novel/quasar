@@ -7,7 +7,7 @@ import postcss from 'rollup-plugin-postcss';
 
 export default [
 	{
-		inlineDynamicImports: false,
+		inlineDynamicImports: true,
 		input: './src/index.js',
 		output: [
 			{
@@ -24,7 +24,8 @@ export default [
 				plugins: [autoprefixer()],
 				sourceMap: true,
 				extract: false,
-				minimize: true
+				minimize: true,
+				inject: { insertAt: 'top' }
 			}),
 			babel({exclude: 'node_modules/**'})
 		]

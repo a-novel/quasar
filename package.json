@@ -3,7 +3,6 @@
   "version": "0.2.6",
   "description": "Functional components for React.",
   "main": "lib/index.js",
-  "style": "lib/styles.css",
   "devDependencies": {
     "@babel/cli": "^7.0.0",
     "@babel/core": "^7.0.0",
@@ -14,7 +13,14 @@
     "@babel/preset-react": "^7.10.4",
     "@jest/globals": "^26.5.3",
     "autoprefixer": "^9.0.2",
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.3",
     "babel-jest": "^26.5.2",
+    "babel-loader": "^8.1.0",
+    "babel-plugin-transform-object-rest-spread": "^6.26.0",
+    "babel-plugin-transform-react-jsx": "^6.24.1",
+    "babel-preset-env": "^1.7.0",
+    "babel-preset-react": "^6.24.1",
     "codecov": "^3.8.0",
     "enzyme": "^3.11.0",
     "enzyme-adapter-react-16": "^^16.4.0-0",
@@ -22,7 +28,6 @@
     "jest-environment-jsdom-sixteen": "^1.0.3",
     "jest-enzyme": "^7.1.2",
     "postcss": "^8.1.1",
-    "react-test-renderer": "^16.13.1",
     "rollup": "^2.29.0",
     "rollup-plugin-babel": "^4.4.0",
     "rollup-plugin-commonjs": "^10.1.0",
@@ -44,6 +49,10 @@
   "bugs": {
     "url": "https://github.com/a-novel/quasar/issues"
   },
+  "files": [
+    "lib",
+    "src"
+  ],
   "homepage": "https://github.com/a-novel/quasar#readme",
   "dependencies": {
     "@anovel/reactor": "^0.3.1",
