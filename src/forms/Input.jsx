@@ -11,7 +11,6 @@ function createExposer() {
 	return { methods: null };
 }
 
-/* c8 ignore next 4 */
 const literals = {
 	WARN_VALUEPROPUPDATE: 'trying to update input records through props : this is forbidden and changes will not be reflected in the component',
 	ERROR_NONVALIDCONTENT: content => `value ${content} of type ${content != null ? content.constructor.name : 'undefined'} is not a valid string`,
@@ -130,9 +129,6 @@ class Input extends React.Component {
 	 * Bind controls and exposers.
 	 */
 	componentDidMount() {
-		// Set caret at the end of content.
-		setRange(this.inputRef.current, this.state.value.length, this.state.value.length, this.props.ignore);
-
 		// Launch sequencer.
 		this.sequencer.listen(this.inputRef.current);
 
@@ -206,6 +202,7 @@ class Input extends React.Component {
 	 * @return {Promise<void>}
 	 */
 	write = (content, remove, caret) => {
+		// Check if value is valid.
 		if (content != null &&  content.constructor.name === 'Number') {
 			content = `${content}`;
 		} else if (content == null || content.constructor.name !== 'String') {
@@ -223,17 +220,21 @@ class Input extends React.Component {
 				{start: this.state.value.length, end: this.state.value.length}
 			);
 
-		if (remove && start <= 0 && start === end) {
+		// Nothing to update.
+		if (start === end && ((remove && start <= 0) || (!remove && content === '')) ) {
 			return Promise.resolve();
 		}
 
 		const {onChange} = this.props;
 
-		const updateCaret = (remove && start > 0 && start === end) ? {start: start - 1, end: start} : {start, end}
+		// When nothing is selected (start === end), remove op is equivalent to replacing previous character by a blank
+		// string.
+		const updateCaret = (remove && start === end) ? {start: start - 1, end: start} : {start, end}
 
 		// Filter content.
 		content = this.filter(content);
 
+		// Cap content size.
 		const finalLength = content.length + this.state.value.length - end + start;
 
 		if (
@@ -251,15 +252,13 @@ class Input extends React.Component {
 		 */
 		const newRecord = this.recorder.push({
 			to: remove ? '' : content,
-			// Remove is equivalent to replace previous character with empty string.
 			caret: updateCaret,
 			timestamp: (new Date()).getTime()
 		});
 
+		// No fixed caret was given within parameters. Only for testing purposes.
 		if (!caret) {
-			const diff = newRecord.to.length - newRecord.from.length;
-			const newPos = end + diff;
-
+			const newPos = end + newRecord.to.length - newRecord.from.length;
 			this.holder = {start: newPos, end: newPos};
 		}
 
@@ -294,6 +293,8 @@ class Input extends React.Component {
 		const altered = this.recorder.revertChain(this.recordChain);
 
 		const currentCaret = this.holder || getRange(this.inputRef.current, this.props.ignore).absolute;
+
+		// Calculate new caret offset based on every alteration that occurred.
 		const newCaretPos = altered.reduce((acc, {from, to, caret}) => {
 			const diff = from.length - to.length;
 			const rCaret = {start: caret.start, end: caret.start + to.length};
@@ -325,6 +326,8 @@ class Input extends React.Component {
 		const altered = this.recorder.applyChain(this.recordChain);
 
 		const currentCaret = this.holder || getRange(this.inputRef.current, this.props.ignore).absolute;
+
+		// Calculate new caret offset based on every alteration that occurred.
 		const newCaretPos = altered.reduce((acc, {from, to, caret}) => {
 			if (caret.start <= acc) {
 				if (caret.end < acc) {

@@ -35,7 +35,7 @@ describe('testing Input component', () => {
 		mount(<Input value='hello world' disableAutoScroll exposer={fn => expose = fn}/>);
 
 		expect(expose.value()).toEqual('hello world');
-		expect(expose.getSelectionRange().absolute).toEqual({start: 11, end: 11});
+		expect(expose.getSelectionRange().absolute).toEqual({start: 0, end: 0});
 	});
 
 	it('should mount exposers correctly', () => {
@@ -478,5 +478,27 @@ describe('testing Input component', () => {
 		expect(exposer.methods.value()).toEqual('world');
 
 		done();
-	})
+	});
+
+	it('should only call onChange when the value gets altered', async done => {
+		const exposer = createExposer();
+		const onChange = jest.fn();
+		mount(<Input exposer={exposer} onChange={onChange} disableAutoScroll/>);
+
+		expect(onChange).not.toHaveBeenCalled();
+
+		await exposer.methods.write('should not write', true);
+
+		expect(onChange).not.toHaveBeenCalled();
+
+		await exposer.methods.write('hello world');
+
+		expect(onChange).toHaveBeenCalledTimes(1);
+
+		await exposer.methods.write('', false, {start: 5, end: 5});
+
+		expect(onChange).toHaveBeenCalledTimes(1);
+
+		done();
+	});
 });
