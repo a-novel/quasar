@@ -146,34 +146,25 @@ class Input extends React.Component {
 
 		// Add possibility for parent component to access some child methods, and interact with it.
 		if (this.props.exposer != null) {
+			const exposedMethods = {
+				value: (...args) => this.getValue(...args),
+				write: (...args) => this.write(...args),
+				/* c8 ignore next 1 */
+				isFocused: () => document.activeElement === this.inputRef.current,
+				focus: () => this.focus(),
+				undo: () => this.undo(),
+				redo: () => this.redo(),
+				records: () => this.recorder.getRecords(),
+				getSelectionRange: () => this.getSelectionRange(),
+				setSelectionRange: (...args) => this.setSelectionRange(...args)
+			};
+
 			switch (this.props.exposer.constructor.name) {
 				case 'Function':
-					this.props.exposer({
-						value: (...args) => this.getValue(...args),
-						write: (...args) => this.write(...args),
-						/* c8 ignore next 1 */
-						isFocused: () => document.activeElement === this.inputRef.current,
-						focus: () => this.focus(),
-						undo: () => this.undo(),
-						redo: () => this.redo(),
-						records: () => this.recorder.getRecords(),
-						getSelectionRange: () => this.getSelectionRange(),
-						setSelectionRange: (...args) => this.setSelectionRange(...args)
-					});
+					this.props.exposer(exposedMethods);
 					break;
 				case 'Object':
-					this.props.exposer.methods = {
-						value: (...args) => this.getValue(...args),
-						write: (...args) => this.write(...args),
-						/* c8 ignore next 1 */
-						isFocused: () => document.activeElement === this.inputRef.current,
-						focus: () => this.focus(),
-						undo: () => this.undo(),
-						redo: () => this.redo(),
-						records: () => this.recorder.getRecords(),
-						getSelectionRange: () => this.getSelectionRange(),
-						setSelectionRange: (...args) => this.setSelectionRange(...args)
-					};
+					this.props.exposer.methods = exposedMethods;
 					break;
 				default:
 					throw new Error(literals.ERROR_NONVALIDEXPOSER(this.props.exposer));
@@ -221,14 +212,21 @@ class Input extends React.Component {
 			return Promise.reject(literals.ERROR_NONVALIDCONTENT(content));
 		}
 
+		const isActive = document.activeElement === this.inputRef.current;
+
 		// Get caret position. We don't use class method since it is useless from inside - it does the same operation for
 		// external user who may not have any access to this.inputRef.
 		const {start, end} = caret || (
 			/* c8 ignore next 2 */
-			document.activeElement === this.inputRef.current ?
+			isActive ?
 				this.holder || getRange(this.inputRef.current, this.props.ignore).absolute :
 				{start: this.state.value.length, end: this.state.value.length}
 			);
+
+		if (remove && start <= 0 && start === end) {
+			return Promise.resolve();
+		}
+
 		const {onChange} = this.props;
 
 		const updateCaret = (remove && start > 0 && start === end) ? {start: start - 1, end: start} : {start, end}
@@ -565,14 +563,15 @@ class Input extends React.Component {
 
 		return (
 			<div className={`${css.wrapper} ${area ? '' : css.inlineWrapper} ${className || ''}`} {...props}>
-				{placeholder != null && (value == null || value.length === 0) ?
+				{
 					addPropsToChildren(
 						placeholder,
-						({className: placeholderClassname, ...placeholderProps}) => ({
-							className: `${css.placeholder} ${placeholderClassname}`, ...placeholderProps
+						({className: placeholderClassname, style, ...placeholderProps}) => ({
+							className: `${css.placeholder} ${placeholderClassname}`,
+							style: Object.assign({opacity: (value == null || value.length === 0) ? 1 : 0}, style || {}),
+							...placeholderProps
 						})
-					) :
-					null
+					)
 				}
 				<pre
 					tabIndex={1}

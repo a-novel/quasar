@@ -378,11 +378,6 @@ describe('testing Input component', () => {
 		expect(component.find('.myPlaceholder').length).toEqual(1);
 		expect(component.find('.myPlaceholder').text()).toEqual('hello world');
 
-		await exposer.methods.write('hello');
-		component.update();
-
-		expect(component.find('.myPlaceholder').length).toEqual(0);
-
 		done();
 	});
 
