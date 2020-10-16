@@ -74,8 +74,8 @@ const Layers = ({children, className, align, expand, ...props}) => {
 
 	return (
 		<div className={`${css.wrapper} ${className || ''}`} {...props}>
-			{addPropsToChildren(children, ({style: childStyle, ...props}) => ({
-				style: Object.assign({}, style, childStyle),
+			{addPropsToChildren(children, ({style: childStyle, ground, ...props}) => ({
+				style: ground ? childStyle : Object.assign({}, style, childStyle),
 				...props
 			}))}
 		</div>
