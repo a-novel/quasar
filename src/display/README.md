@@ -36,7 +36,7 @@ const MyComponent = () => (
 );
 ```
 
-
+![Layers chema 1](https://github.com/a-novel/quasar/blob/master/assets/layers%20schema%201.jpg?raw=true)
 
 # License
 
