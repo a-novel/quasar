@@ -39,6 +39,7 @@ A list of components to use for building advanced forms.
         - [onWriteError](#onwriteerror)
 - [Special Objects](#special-objects)
     - [Caret](#caret)
+- [License](#license)
 
 # Input
 

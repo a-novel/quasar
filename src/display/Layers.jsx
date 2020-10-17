@@ -30,22 +30,22 @@ const Layers = ({children, className, align, expand, ...props}) => {
 			groundStyle.marginBottom = 'auto';
 		}
 
-		if (align.top && !align.verticalCenter) {
+		if (align.top) {
 			style.top = align.top;
 			groundStyle.top = align.top;
 		}
 
-		if (align.bottom && !align.verticalCenter) {
+		if (align.bottom) {
 			style.bottom = align.bottom;
 			groundStyle.bottom = align.bottom;
 		}
 
-		if (align.left && !align.horizontalCenter) {
+		if (align.left) {
 			style.left = align.left;
 			groundStyle.left = align.left;
 		}
 
-		if (align.right && !align.horizontalCenter) {
+		if (align.right) {
 			style.right = align.right;
 			groundStyle.right = align.right;
 		}

@@ -1,4 +1,4 @@
-# Images
+# Display
 
 <div align="center">
     <a href="https://www.npmjs.com/package/@anovel/quasar">
@@ -18,43 +18,25 @@
 </div>
 <br/>
 
-Enhance your application with pictures, the React way.
+# Layers
 
-- [Image](#image)
-- [Svg](#svg)
-- [License](#license)
-
-# Image
+Layers adds another dimension to the horizontal and vertical axes for organizing elements in the DOM. It uses the
+absolute css positioning to display elements in a z-axis stack.
 
 ```jsx
 import React from 'react';
-import {Image} from '@anovel/quasar';
+import {Layers} from '@anovel/quasar';
 
 const MyComponent = () => (
-  <Image src='/path/to/file'/>
+  <Layers>
+    <Element1/>
+    <Element2/>
+    <Element3/>
+  </Layers>
 );
 ```
 
-The src prop, which should always start with a `/`, is relative to the
-`public/` folder in React.
 
-> Image tag is rendered as a div, so it is compatible with every div
-> element props.
-
-# Svg
-
-Provides a Svg wrapper to display a svg image in an inline friendly way. The svg size is controllable through the 
-font-size css property.
-
-```jsx
-import React from 'react';
-import {Svg} from '@anovel/quasar';
-import {ReactComponent as MySvgComponent} from 'path/to/my/file.svg';
-
-const MyComponent = () => (
-  <Svg component={MySvgComponent}/>
-);
-```
 
 # License
 
