@@ -1,6 +1,6 @@
 {
   "name": "@anovel/quasar",
-  "version": "0.2.11",
+  "version": "0.3.0",
   "description": "Functional components for React.",
   "main": "lib/index.js",
   "devDependencies": {

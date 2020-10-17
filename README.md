@@ -28,6 +28,10 @@ A list of components to use for building advanced forms.
 
 Enhance your application with pictures, the React way.
 
+## [Display](https://github.com/a-novel/quasar/tree/master/src/display)
+
+Organize your components easily.
+
 # License
 
 [Licensed under MIT for A-Novel](https://github.com/a-novel/quasar/blob/master/LICENSE).
