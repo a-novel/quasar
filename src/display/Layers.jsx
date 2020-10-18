@@ -44,7 +44,7 @@ const buildAlignObject = align => {
 				top: verticalCenter ? '50%' : null,
 				left: horizontalCenter ? '50%' : null,
 				transformOrigin: shouldTransform ? 'center' : null,
-				transform: shouldTransform ? `translate(${transform[0]}, ${transform[1]})` : null
+				transform: shouldTransform ? `translate(${transform[0] || '0%'}, ${transform[1] || '0%'})` : null
 			},
 			groundStyle: {
 				marginTop: verticalCenter ? 'auto' : null,
