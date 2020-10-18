@@ -6,44 +6,62 @@ const literals = {
 	ERROR_NONVALIDPROP: (prop, propName, expected) => `non valid prop ${propName} of type ${prop.constructor.name} : expected ${expected}`
 };
 
-const computeOptions = (align, expand) => {
-	const style = {position: 'absolute'};
-	const groundStyle = {position: 'relative'};
-	const transform = ['', ''];
-
-	if (align != null) {
-		if (align.constructor.name !== 'Object') {
-			throw new Error(literals.ERROR_NONVALIDPROP(align, 'align', 'Object'));
-		}
-
-		if (align.verticalCenter) {
-			style.top = '50%';
-			transform[0] = '-50%';
-			groundStyle.marginTop = 'auto';
-			groundStyle.marginBottom = 'auto';
-		}
-
-		if (align.horizontalCenter) {
-			style.left = '50%';
-			transform[1] = '-50%';
-			groundStyle.marginLeft = 'auto';
-			groundStyle.marginRight = 'auto';
-		}
-
-		if (transform.find(x => x !== '')) {
-			style.transformOrigin = 'center';
-			style.transform = `translate(${transform[0]}, ${transform[1]})`;
-		}
-	} else {
-		style.top = '50%';
-		style.left = '50%';
-		style.transformOrigin = 'center';
-		style.transform = 'translate(-50%, -50%)';
-		groundStyle.marginTop = 'auto';
-		groundStyle.marginBottom = 'auto';
-		groundStyle.marginLeft = 'auto';
-		groundStyle.marginRight = 'auto';
+const buildAlignObject = align => {
+	if (align === false) {
+		return {style: {}, groundStyle: {}};
 	}
+
+	if (align === true || align == null) {
+		return {
+			style: {
+				top: '50%',
+				left: '50%',
+				transformOrigin: 'center',
+				transform: 'translate(-50%, -50%)'
+			},
+			groundStyle: {
+				margin: 'auto'
+			}
+		};
+	}
+
+	if (align.constructor.name === 'Object') {
+		const transform = ['', ''];
+		const {verticalCenter, horizontalCenter} = align;
+
+		if (verticalCenter) {
+			transform[1] = '-50%';
+		}
+
+		if (horizontalCenter) {
+			transform[0] = '-50%';
+		}
+
+		const shouldTransform = transform.find(x => x !== '');
+
+		return {
+			style: {
+				top: verticalCenter ? '50%' : null,
+				left: horizontalCenter ? '50%' : null,
+				transformOrigin: shouldTransform ? 'center' : null,
+				transform: shouldTransform ? `translate(${transform[0]}, ${transform[1]})` : null
+			},
+			groundStyle: {
+				marginTop: verticalCenter ? 'auto' : null,
+				marginBottom: verticalCenter ? 'auto' : null,
+				marginLeft: horizontalCenter ? 'auto' : null,
+				marginRight: horizontalCenter ? 'auto' : null
+			}
+		};
+	}
+
+	throw new Error(literals.ERROR_NONVALIDPROP(align, 'align', 'Object'));
+};
+
+const computeOptions = (align, expand) => {
+	const {style, groundStyle} = buildAlignObject(align);
+	style.position = 'absolute';
+	groundStyle.position = 'relative';
 
 	if (expand != null) {
 		if (expand === true) {
@@ -79,7 +97,7 @@ const Layers = ({children, className, align, expand, ...props}) => {
 							Object.assign(
 								{},
 								emancipate ? {} : (ground ? groundStyle : style),
-								!emancipate && (align || expand) ? computeOptions(childAlign, childExpand)[ground ? 'groundStyle' : 'style'] : {},
+								(childAlign || childExpand) ? computeOptions(childAlign, childExpand)[ground ? 'groundStyle' : 'style'] : {},
 								childStyle
 							);
 

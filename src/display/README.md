@@ -73,6 +73,8 @@ Align is an object. You can use the following options on it:
 | verticalCenter | boolean | Center childrens vertically. |
 | horizontalCenter | boolean | Center childrens horizontally. |
 
+You can also use a boolean value to fully center or un-center a child or all children.
+
 ### expand
 
 Expand will size every children to match the size of the container. It takes the following values:
@@ -137,7 +139,7 @@ import {Layers} from '@anovel/quasar';
 const MyComponent = () => (
   <Layers align={{verticalCenter: true}}>
     <Element1/>
-    <Element2 emancipate align={{horizontalCenter: true}}/>
+    <Element2 ground align={{horizontalCenter: true}}/>
     <Element3/>
   </Layers>
 );
