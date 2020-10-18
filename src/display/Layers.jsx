@@ -98,7 +98,7 @@ const Layers = ({children, className, align, expand, ...props}) => {
 								{},
 								emancipate ? {} : (ground ? groundStyle : style),
 								(childAlign || childExpand) ? computeOptions(childAlign, childExpand)[ground ? 'groundStyle' : 'style'] : {},
-								childStyle
+								childStyle || {}
 							);
 
 						return {style: mergeStyle, ...props};
