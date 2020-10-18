@@ -24,7 +24,7 @@ const Flex = ({className, style, vertical, horizontal, center, start, end, child
 			{addPropsToChildren(
 				children,
 				({grow, style: childStyle, ...props}) => ({
-					style: grow && !childStyle.flexGrow ? {flexGrow: 1, ...childStyle} : childStyle,
+					style: grow && !(childStyle || {}).flexGrow ? {flexGrow: 1, ...(childStyle || {})} : childStyle,
 					...props
 				})
 			)}
